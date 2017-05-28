@@ -68,6 +68,7 @@ contract SSInsurance {
         
         customers[msg.sender].endDate = now + ( duration * 1 minutes );
         customers[msg.sender].isPaid = true;
+        statistics.noCustomer = statistics.noCustomer + 1; 
         
         uint mult = getInsuranceNote(msg.sender,duration,msg.value);
         customers[msg.sender].limit = msg.value*mult/100;
@@ -106,6 +107,7 @@ contract SSInsurance {
             
             hospitals[msg.sender].endDate = now + duration * ( 1 minutes ); 
             hospitals[msg.sender].isPaid = true;
+            statistics.noHospital = statistics.noHospital + 1;
             hospitals[msg.sender].treatingCost = treatingCost;
             
             return true;
