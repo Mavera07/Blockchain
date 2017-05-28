@@ -129,7 +129,11 @@ contract SSInsurance {
     function  withdraw(address host1)
         returns (bool){
             require(customers[msg.sender].isPaid);
+            require(hospitals[host1].isPaid);
             require(customers[msg.sender].remaining >= hospitals[host1].treatingCost);
+            
+            msg.sender.send(hospitals[host1].treatingCost);
+            customers[msg.sender].remaining = customers[msg.sender].remaining - hospitals[host1].treatingCost;
     }
     
     // TODO
