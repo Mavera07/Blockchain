@@ -2,20 +2,20 @@ pragma solidity ^0.4.11;
 
 contract SSInsurance {
     
-    struct Customer {	
-	    address	owner;	
+    struct Customer {   
+        address owner;  
         uint endDate;
         bool isPaid;
         uint limit;
         uint remaining;
-    }	
+    }   
     
-    struct Hospital {	
-	    address	owner;	
-		uint endDate;
-		bool isPaid;
-		uint treatingCost;
-    }	
+    struct Hospital {   
+        address owner;  
+        uint endDate;
+        bool isPaid;
+        uint treatingCost;
+    }   
     
     struct Statistics {
         uint noCustomer;
@@ -75,7 +75,13 @@ contract SSInsurance {
     }
     
     // Hospital API Call
-    // TO DO
+    // Hospital makes an offer to our insurance company
+    // Hospital defines a treatingCost and pays money to our insurance company
+    // The function calculates an expected/desired payment from several parameters
+    // It takes into account the number of customers that have contract with our insurance company
+    // and the number of hospitals that have contract with our insurance company and the treatingCost
+    // If the calculated value is less than the value that hospital offers,
+    // then the offer got accepted and hospital have an contract with our company and become active
     function hospitalOffer (uint treatingCost) payable
         returns (bool){
             require(!hospitals[msg.sender].isPaid);
@@ -120,10 +126,10 @@ contract SSInsurance {
     // Hospital gets money from our insurance company for treaing a customer
     // Customer must run this code to be treated by the hospital
     // Hospital will not treat the customer before the customer run this function
-    function  withdraw()
+    function  withdraw(address host1)
         returns (bool){
-            
-        
+            require(customers[msg.sender].isPaid);
+            require(customers[msg.sender].remaining >= hospitals[host1].treatingCost);
     }
     
     // TODO
