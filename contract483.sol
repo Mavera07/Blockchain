@@ -5,15 +5,12 @@ contract SSInsurance {
     struct Customer {   
         address owner;  
         uint endDate;
-        bool isPaid;
-        uint limit;
         uint remaining;
     }   
     
     struct Hospital {   
         address owner;  
         uint endDate;
-        bool isPaid;
         uint treatingCost;
     }   
     
@@ -64,15 +61,13 @@ contract SSInsurance {
     // This function is for the insurance payment
     // Customers call this function to buy an insurance
     function payInsurance(uint duration) payable{
-        require(!customers[msg.sender].isPaid);
+        require(customers[msg.sender].endDate < now);
         
         customers[msg.sender].endDate = now + ( duration * 1 minutes );
-        customers[msg.sender].isPaid = true;
         statistics.noCustomer = statistics.noCustomer + 1; 
         
         uint mult = getInsuranceNote(msg.sender,duration,msg.value);
-        customers[msg.sender].limit = msg.value*mult/100;
-        customers[msg.sender].remaining = 0;
+        customers[msg.sender].remaining = msg.value*mult/100;
     }
     
     // Hospital API Call
@@ -85,7 +80,7 @@ contract SSInsurance {
     // then the offer got accepted and hospital have an contract with our company and become active
     function hospitalOffer (uint treatingCost) payable
         returns (bool){
-            require(!hospitals[msg.sender].isPaid);
+            require(hospitals[msg.sender].endDate < now);
             
             uint duration = 12;
             uint hospitalProfit = statistics.noCustomer * 6 / 10 *treatingCost * 6 / 10;
@@ -106,7 +101,6 @@ contract SSInsurance {
             require(desiredGain <= msg.value);
             
             hospitals[msg.sender].endDate = now + duration * ( 1 minutes ); 
-            hospitals[msg.sender].isPaid = true;
             statistics.noHospital = statistics.noHospital + 1;
             hospitals[msg.sender].treatingCost = treatingCost;
             
@@ -130,16 +124,13 @@ contract SSInsurance {
     // Hospital will not treat the customer before the customer run this function
     function  withdraw(address host1)
         returns (bool){
-            require(customers[msg.sender].isPaid);
-            require(hospitals[host1].isPaid);
+            require(customers[msg.sender].endDate > now);
+            require(hospitals[host1].endDate > now);
             require(customers[msg.sender].remaining >= hospitals[host1].treatingCost);
             
             msg.sender.send(hospitals[host1].treatingCost);
             customers[msg.sender].remaining = customers[msg.sender].remaining - hospitals[host1].treatingCost;
     }
-    
-    // TODO
-    // Check date for updating isPaid
     
     
 }
