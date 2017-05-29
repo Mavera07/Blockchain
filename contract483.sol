@@ -77,7 +77,9 @@ contract SSInsurance {
     
     
     mapping(address => Customer) customers;
+    IterableMapping.itmap customerAddresses;
     mapping(address => Hospital) hospitals;
+    IterableMapping.itmap hospitalAddresses;
     Statistics statistics;
     
     
@@ -110,6 +112,14 @@ contract SSInsurance {
     // with our insurance company
     function getHospitalNumber()
         constant returns (uint hospitalNumber){
+	    for( var i = IterableMapping.iterate_start(hospitalAddresses); IterableMapping.iterate_valid(hospitalAddresses, i); i = IterableMapping.iterate_next(hospitalAddresses, i)) {
+		var (key, value) = IterableMapping.iterate_get(hospitalAddresses, i);
+		if(hospitals[key].endDate < now) {
+		    IterableMapping.remove(hospitalAddresses, i);
+		    delete hospitals[key]; // may be a problem?
+		}
+	    }
+	    statistics.noHospital =  hospitalAddresses.size;
             hospitalNumber = statistics.noHospital;
     }
     
@@ -118,6 +128,7 @@ contract SSInsurance {
     // Customers call this function to buy an insurance
     function payInsurance(uint duration) payable{
         require(customers[msg.sender].endDate < now);
+	IterableMapping.insert(customerAddresses, msg.sender, 10); // 10 for customer value...
         
         customers[msg.sender].endDate = now + ( duration * 1 minutes );
         // statistics.noCustomer = statistics.noCustomer + 1; 
@@ -137,9 +148,11 @@ contract SSInsurance {
     function hospitalOffer (uint treatingCost) payable
         returns (bool){
             require(hospitals[msg.sender].endDate < now);
+	    getHospitalNumber();
+	    getCustomerNumber();
             
-            uint noCust = getCustomerNumber();
-            uint noHost = getHospitalNumber();
+            uint noCust = statistics.noCustomer;
+            uint noHost = statistics.noHospital;
             
             uint duration = 12;
             uint hospitalProfit = noCust * 6 / 10 *treatingCost * 6 / 10;
@@ -158,6 +171,7 @@ contract SSInsurance {
             uint desiredGain = hospitalProfit * sharePercent / 100;
             
             require(desiredGain <= msg.value);
+	    IterableMapping.insert(hospitalAddresses, msg.sender, 20); // 20 for hospitals...
             
             hospitals[msg.sender].endDate = now + duration * ( 1 minutes ); 
             // statistics.noHospital = noHost + 1;
@@ -172,6 +186,14 @@ contract SSInsurance {
     // contract with our insurance company.
     function getCustomerNumber ()
         returns (uint customerNumber){
+	    for( var i = IterableMapping.iterate_start(customerAddresses); IterableMapping.iterate_valid(customerAddresses, i); i = IterableMapping.iterate_next(customerAddresses, i)) {
+		var (key, value) = IterableMapping.iterate_get(customerAddresses, i);
+		if(customers[key].endDate < now) {
+		    IterableMapping.remove(customerAddresses, i);
+		    delete customers[key]; // may be a problem?
+		}
+	    }
+	    statistics.noCustomer =  customerAddresses.size;
             customerNumber = statistics.noCustomer;
     }
     
