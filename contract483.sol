@@ -120,7 +120,7 @@ contract SSInsurance {
         require(customers[msg.sender].endDate < now);
         
         customers[msg.sender].endDate = now + ( duration * 1 minutes );
-        statistics.noCustomer = statistics.noCustomer + 1; 
+        // statistics.noCustomer = statistics.noCustomer + 1; 
         
         uint mult = getInsuranceNote(msg.sender,duration,msg.value);
         customers[msg.sender].remaining = msg.value*mult/100;
@@ -138,16 +138,19 @@ contract SSInsurance {
         returns (bool){
             require(hospitals[msg.sender].endDate < now);
             
+            uint noCust = getCustomerNumber();
+            uint noHost = getHospitalNumber();
+            
             uint duration = 12;
-            uint hospitalProfit = statistics.noCustomer * 6 / 10 *treatingCost * 6 / 10;
+            uint hospitalProfit = noCust * 6 / 10 *treatingCost * 6 / 10;
             
             uint sharePercent = 0;
-            if(statistics.noHospital < 10){
-                sharePercent = 20 + (40 - 20) * statistics.noHospital / 10;
-            }else if(statistics.noHospital < 100){
-                sharePercent = 40 + (50 - 40) * (statistics.noHospital-10) / (100 - 10);
-            }else if(statistics.noHospital < 150){
-                sharePercent = 50 - (50 - 30) * (statistics.noHospital-100) / (150 - 100);
+            if(noHost < 10){
+                sharePercent = 20 + (40 - 20) * noHost / 10;
+            }else if(noHost < 100){
+                sharePercent = 40 + (50 - 40) * (noHost-10) / (100 - 10);
+            }else if(noHost < 150){
+                sharePercent = 50 - (50 - 30) * (noHost-100) / (150 - 100);
             }else{
                 sharePercent = 30;
             }
@@ -157,7 +160,7 @@ contract SSInsurance {
             require(desiredGain <= msg.value);
             
             hospitals[msg.sender].endDate = now + duration * ( 1 minutes ); 
-            statistics.noHospital = statistics.noHospital + 1;
+            // statistics.noHospital = noHost + 1;
             hospitals[msg.sender].treatingCost = treatingCost;
             
             return true;
