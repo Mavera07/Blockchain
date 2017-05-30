@@ -1,32 +1,34 @@
 import React from 'react';
 import {Bond, TimeBond} from 'oo7';
 import {Rspan} from 'oo7-react';
-import {InputBond, HashBond, BButton, TransactionProgressLabel} from 'parity-reactive-ui';
+import {InputBond} from 'parity-reactive-ui';
 import {bonds, formatBalance, formatBlockNumber} from 'oo7-parity';
+import {Hospital} from './hospital';
 
-const CounterABI = [
+
+const InsuranceABI = [
   {
     "constant": false,
     "inputs": [
       {
-        "name": "_option",
+        "name": "duration",
         "type": "uint256"
       }
     ],
-    "name": "vote",
+    "name": "payInsurance",
     "outputs": [],
-    "payable": false,
+    "payable": true,
     "type": "function"
   },
   {
-    "constant": true,
+    "constant": false,
     "inputs": [
       {
-        "name": "",
+        "name": "host1",
         "type": "address"
       }
     ],
-    "name": "hasVoted",
+    "name": "withdraw",
     "outputs": [
       {
         "name": "",
@@ -37,17 +39,48 @@ const CounterABI = [
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [
+    "constant": false,
+    "inputs": [],
+    "name": "getCustomerNumber",
+    "outputs": [
       {
-        "name": "",
+        "name": "customerNumber",
         "type": "uint256"
       }
     ],
-    "name": "votes",
+    "payable": false,
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "treatingCost",
+        "type": "uint256"
+      }
+    ],
+    "name": "hospitalOffer",
     "outputs": [
       {
         "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": true,
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "duration",
+        "type": "uint256"
+      }
+    ],
+    "name": "getInsuranceNote",
+    "outputs": [
+      {
+        "name": "multiplier",
         "type": "uint256"
       }
     ],
@@ -57,48 +90,27 @@ const CounterABI = [
   {
     "constant": true,
     "inputs": [],
-    "name": "myVal",
+    "name": "getHospitalNumber",
     "outputs": [
       {
-        "name": "",
+        "name": "hospitalNumber",
         "type": "uint256"
       }
     ],
     "payable": false,
     "type": "function"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "name": "who",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "name": "option",
-        "type": "uint256"
-      }
-    ],
-    "name": "Voted",
-    "type": "event"
   }
 ];
 
 export class App extends React.Component {
   constructor() {
     super();
-    this.counter = bonds.makeContract('0x020d6021d1F4225BeE4a6BCD4364e9A2FEA8061F', CounterABI);
+    this.state = { insurance: bonds.makeContract('0x8eEac30303757a28CEE3A236a56F96863850a096',InsuranceABI) };
   }
   render () {
     return (<div>
-    	<a
-    		href = '#'
-           onClick = {() => alert(this.counter.vote(1))}
-           >
-           	kkk{this.counter.myVal}
-           </a>
-  </div>);
+      Hello World!
+      <Hospital contract={this.state.insurance} />
+    </div>);
   }
 }
