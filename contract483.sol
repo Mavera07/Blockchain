@@ -2,14 +2,14 @@ pragma solidity ^0.4.11;
 
 library IterableMapping {
     struct itmap {
-        mapping(uint => IndexValue) data;
+        mapping(address => IndexValue) data;
         KeyFlag[] keys;
         uint size;
     }
     struct IndexValue { uint keyIndex; uint value; }
-    struct KeyFlag { uint key; bool deleted; }
+    struct KeyFlag { address key; bool deleted; }
     
-    function insert(itmap storage self, uint key, uint value) 
+    function insert(itmap storage self, address key, uint value) 
         returns (bool replaced) {
             uint keyIndex = self.data[key].keyIndex;
             self.data[key].value = value;
@@ -24,7 +24,7 @@ library IterableMapping {
                 return false;
             }
     }
-    function remove(itmap storage self, uint key) 
+    function remove(itmap storage self, address key) 
         returns (bool success) {
             uint keyIndex = self.data[key].keyIndex;
             if (keyIndex == 0)
@@ -34,7 +34,7 @@ library IterableMapping {
             self.size --;
     }
     
-    function contains(itmap storage self, uint key) 
+    function contains(itmap storage self, address key) 
         returns (bool) {return self.data[key].keyIndex > 0;}
     function iterate_start(itmap storage self) 
         returns (uint keyIndex){return iterate_next(self, uint(-1));}
@@ -49,7 +49,7 @@ library IterableMapping {
             return keyIndex;
     }
     function iterate_get(itmap storage self, uint keyIndex) 
-        returns (uint key, uint value){
+        returns (address key, uint value){
             key = self.keys[keyIndex].key;
             value = self.data[key].value;
     }
@@ -90,7 +90,7 @@ contract SSInsurance {
     // it calculates a multiplier number, in other words insurance note
     // With this number, insurance limit will be calculated.
     // insurance limit = payment * multiplier / 100
-    function getInsuranceNote(address cust1,uint duration,uint payment)
+    function getInsuranceNote(uint duration)
         returns (uint multiplier){
             
         if(duration <= 12){
@@ -112,14 +112,14 @@ contract SSInsurance {
     // with our insurance company
     function getHospitalNumber()
         constant returns (uint hospitalNumber){
-	    for( var i = IterableMapping.iterate_start(hospitalAddresses); IterableMapping.iterate_valid(hospitalAddresses, i); i = IterableMapping.iterate_next(hospitalAddresses, i)) {
-		var (key, value) = IterableMapping.iterate_get(hospitalAddresses, i);
-		if(hospitals[key].endDate < now) {
-		    IterableMapping.remove(hospitalAddresses, i);
-		    delete hospitals[key]; // may be a problem?
-		}
-	    }
-	    statistics.noHospital =  hospitalAddresses.size;
+        for( var i = IterableMapping.iterate_start(hospitalAddresses); IterableMapping.iterate_valid(hospitalAddresses, i); i = IterableMapping.iterate_next(hospitalAddresses, i)) {
+        var (key, value) = IterableMapping.iterate_get(hospitalAddresses, i);
+        if(hospitals[key].endDate < now) {
+            IterableMapping.remove(hospitalAddresses, key);
+            delete hospitals[key]; // may be a problem?
+        }
+        }
+        statistics.noHospital =  hospitalAddresses.size;
             hospitalNumber = statistics.noHospital;
     }
     
@@ -128,12 +128,12 @@ contract SSInsurance {
     // Customers call this function to buy an insurance
     function payInsurance(uint duration) payable{
         require(customers[msg.sender].endDate < now);
-	IterableMapping.insert(customerAddresses, msg.sender, 10); // 10 for customer value...
+        IterableMapping.insert(customerAddresses, msg.sender, 10); // 10 for customer value...
         
         customers[msg.sender].endDate = now + ( duration * 1 minutes );
         // statistics.noCustomer = statistics.noCustomer + 1; 
         
-        uint mult = getInsuranceNote(msg.sender,duration,msg.value);
+        uint mult = getInsuranceNote(duration);
         customers[msg.sender].remaining = msg.value*mult/100;
     }
     
@@ -148,8 +148,8 @@ contract SSInsurance {
     function hospitalOffer (uint treatingCost) payable
         returns (bool){
             require(hospitals[msg.sender].endDate < now);
-	    getHospitalNumber();
-	    getCustomerNumber();
+        getHospitalNumber();
+        getCustomerNumber();
             
             uint noCust = statistics.noCustomer;
             uint noHost = statistics.noHospital;
@@ -171,7 +171,7 @@ contract SSInsurance {
             uint desiredGain = hospitalProfit * sharePercent / 100;
             
             require(desiredGain <= msg.value);
-	    IterableMapping.insert(hospitalAddresses, msg.sender, 20); // 20 for hospitals...
+        IterableMapping.insert(hospitalAddresses, msg.sender, 20); // 20 for hospitals...
             
             hospitals[msg.sender].endDate = now + duration * ( 1 minutes ); 
             // statistics.noHospital = noHost + 1;
@@ -186,14 +186,14 @@ contract SSInsurance {
     // contract with our insurance company.
     function getCustomerNumber ()
         returns (uint customerNumber){
-	    for( var i = IterableMapping.iterate_start(customerAddresses); IterableMapping.iterate_valid(customerAddresses, i); i = IterableMapping.iterate_next(customerAddresses, i)) {
-		var (key, value) = IterableMapping.iterate_get(customerAddresses, i);
-		if(customers[key].endDate < now) {
-		    IterableMapping.remove(customerAddresses, i);
-		    delete customers[key]; // may be a problem?
-		}
-	    }
-	    statistics.noCustomer =  customerAddresses.size;
+        for( var i = IterableMapping.iterate_start(customerAddresses); IterableMapping.iterate_valid(customerAddresses, i); i = IterableMapping.iterate_next(customerAddresses, i)) {
+        var (key, value) = IterableMapping.iterate_get(customerAddresses, i);
+        if(customers[key].endDate < now) {
+            IterableMapping.remove(customerAddresses, key);
+            delete customers[key]; // may be a problem?
+        }
+        }
+        statistics.noCustomer =  customerAddresses.size;
             customerNumber = statistics.noCustomer;
     }
     
@@ -209,7 +209,7 @@ contract SSInsurance {
             require(hospitals[host1].endDate > now);
             require(customers[msg.sender].remaining >= hospitals[host1].treatingCost);
             
-            msg.sender.send(hospitals[host1].treatingCost);
+            msg.sender.transfer(hospitals[host1].treatingCost);
             customers[msg.sender].remaining = customers[msg.sender].remaining - hospitals[host1].treatingCost;
     }
     
